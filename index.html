@@ -2,21 +2,54 @@
 
 <body>
     <p>
+        Select File :
+        <input type="file" id="logFiles" name="files[]" />
+        <output id="logFileList"></output>
+    </p>
+    <p>
         Search :
         <input type="text" id="searchString">
         <button onclick="addSearchString()"> Add </button>
         <div id="searchStringsCheckBoxTable"></div>
+    </p>
+    <p>
+        <button id="processLogFileBtn"> Process </button>
+    </p>
 </body>
 
 <script>
-    var searchStrings = []
+    // Global Variables    
+    var logViewData = {
+        searchStrings:[]
+    }
+
+// Register Events
+    document.getElementById('logFiles').addEventListener('change', handleFileSelect, false);
+    document.getElementById('processLogFileBtn').addEventListener('click', handleOnClickProcessLogFile, false);
+
+// Functions
+
+    function handleFileSelect(evt) {
+        var files = evt.target.files; // FileList object
+
+        // files is a FileList of File objects. List some properties.
+        var output = [];
+        for (var i = 0, f; f = files[i]; i++) {
+            output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+                      f.size, ' bytes, last modified: ',
+                      f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+                      '</li>');
+        }
+        document.getElementById('logFileList').innerHTML = '<ul>' + output.join('') + '</ul>';
+    }    
+    
     function addSearchString() {
         searchString = document.getElementById("searchString").value
-        for (i in searchStrings) {
-            if (searchStrings[i][0] == searchString) return
+        for (i in logViewData.searchStrings) {
+            if (logViewData.searchStrings[i][0] == searchString) return
         }
         if (searchString.length != 0) {
-            searchStrings.push([searchString, 'checked'])
+            logViewData.searchStrings.push([searchString, 'checked', getNewColor()])
             updateSearchStringsCheckBox()
         }
     }
@@ -24,10 +57,10 @@
     function updateSearchStringCheckBox(checked, index) {
         console.log("updateSearchStringCheckBox = " + checked + index)
         if (checked) {
-            searchStrings[index][1] = "checked"
+            logViewData.searchStrings[index][1] = "checked"
         }
         else {
-            searchStrings[index][1] = ""
+            logViewData.searchStrings[index][1] = ""
         }
     }
     
@@ -41,15 +74,37 @@
         var searchStringsOutput = []
         
         searchStringsOutput.push("<table>")
-        for (i in searchStrings) {
-            searchStringsOutput.push("<tr>")
-            searchStringsOutput.push("<td>" + getOneSearchStringCheckBox(i, searchStrings[i]) + "</td>")
+        for (i in logViewData.searchStrings) {
+            searchStringsOutput.push("<tr style='color:" + logViewData.searchStrings[i][2] + "'>")
+            searchStringsOutput.push("<td>" + getOneSearchStringCheckBox(i, logViewData.searchStrings[i]) + "</td>")
+            searchStringsOutput.push("<td>" + logViewData.searchStrings[i][2] + "</td>")
             searchStringsOutput.push("</tr>")
         }
         searchStringsOutput.push("</table>")
         document.getElementById("searchStringsCheckBoxTable").innerHTML = searchStringsOutput.join("")
+        console.log(searchStringsOutput.join(""))
     }
+    
+    var colorPickerData = {
+        currentIndex:0,
+        colorTable: [
+        "#ff0000", "#ff4000", "#ff8000", "#ffbf00", "#ffff00", 
+        "#bfff00", "#80ff00", "#40ff00", "#00ff00", "#00ff40", 
+        "#00ff80", "#00ffbf", "#00ffff", "#00bfff", "#007fff", 
+        "#0040ff", "#0000ff", "#4000ff", "#7f00ff", "#bf00ff", 
+        "#ff00ff", "#ff00bf", "#ff0080"]
+    }
+    
+    function getNewColor() {
+        var c = colorPickerData.colorTable[colorPickerData.currentIndex]
+        colorPickerData.currentIndex += 1
+        colorPickerData.currentIndex =  colorPickerData.currentIndex % colorPickerData.colorTable.length
+        return c
+    }
+    
+    function handleOnClickProcessLogFile(evt) {
 
+    }
 </script>
 
 </html>
