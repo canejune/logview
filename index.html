@@ -5,8 +5,9 @@
         Search :
         <input type="text" id="searchString">
         <button onclick="addSearchString()"> Add </button>
-        <div id="searchStringsCheckBox"></div>
+        <div id="searchStringsCheckBoxTable"></div>
 </body>
+
 <script>
     var searchStrings = []
     function addSearchString() {
@@ -32,17 +33,21 @@
     
     function getOneSearchStringCheckBox(index, searchString) {
         var oneSearchStringOutput = "<input type='checkbox' id = 'searchStringCheckBox_" + index + "' " + searchString[1] + 
-        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + searchString[0] + "<br>"
+        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + searchString[0]
         console.log(oneSearchStringOutput)
         return oneSearchStringOutput
     }
     function updateSearchStringsCheckBox() {
         var searchStringsOutput = []
         
+        searchStringsOutput.push("<table>")
         for (i in searchStrings) {
-            searchStringsOutput.push(getOneSearchStringCheckBox(i, searchStrings[i]))
+            searchStringsOutput.push("<tr>")
+            searchStringsOutput.push("<td>" + getOneSearchStringCheckBox(i, searchStrings[i]) + "</td>")
+            searchStringsOutput.push("</tr>")
         }
-        document.getElementById("searchStringsCheckBox").innerHTML = searchStringsOutput.join("")
+        searchStringsOutput.push("</table>")
+        document.getElementById("searchStringsCheckBoxTable").innerHTML = searchStringsOutput.join("")
     }
 
 </script>
