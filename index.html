@@ -32,6 +32,7 @@
     var logViewData = {
         searchStringsData:[{searchString:"", used:'checked', color:"#000000", matchLastCount:0}],
         logfile:NaN,
+        gllTimeTag:true
     }
 
 // Register Events
@@ -108,11 +109,7 @@
     var colorPickerData = {
         currentIndex:0,
         colorTable: [
-        "#ff0000", "#ff4000", "#ff8000", "#ffbf00", "#ffff00", 
-        "#bfff00", "#80ff00", "#40ff00", "#00ff00", "#00ff40", 
-        "#00ff80", "#00ffbf", "#00ffff", "#00bfff", "#007fff", 
-        "#0040ff", "#0000ff", "#4000ff", "#7f00ff", "#bf00ff", 
-        "#ff00ff", "#ff00bf", "#ff0080"]
+        "#ff0000", "#ffbf00", "#80ff00", "#00ff40", "#00ffff", "#0040ff", "#7f00ff", "#ff00bf"]
     }
     
     function getNewColor() {
@@ -143,15 +140,29 @@
         startTimeMs = -1
         var lines = contents.toString().split("\n");
         for (i in lines) {
-            var t = lines[i].match(/\d+:\d+:\d+:\d+/)
-            if (t) {
-                tstr = t[0].split(":")
-                timeMs = parseInt(tstr[3]) + parseInt(tstr[2]) * 1000 + parseInt(tstr[1]) * 1000 * 60 + parseInt(tstr[0]) * 1000 * 60 * 60
-                if (startTimeMs == -1) {
-                    startTimeMs = timeMs
+            if (logViewData.gllTimeTag) {
+                var t = lines[i].match(/\d+:\d+:\d+\.\d+/)
+                if (t) {
+                    tstr = t[0].split(":")
+                    timeMs = parseFloat(tstr[2]) * 1000 + parseInt(tstr[1]) * 1000 * 60 + parseInt(tstr[0]) * 1000 * 60 * 60
+                    if (startTimeMs == -1) {
+                        startTimeMs = timeMs
+                    }
+                    var oneLogLine = {tMs:(timeMs - startTimeMs), line:lines[i]}
+                    logLines.push(oneLogLine)
+                }                
+            }
+            else {
+                var t = lines[i].match(/\d+:\d+:\d+:\d+/)
+                if (t) {
+                    tstr = t[0].split(":")
+                    timeMs = parseInt(tstr[3]) + parseInt(tstr[2]) * 1000 + parseInt(tstr[1]) * 1000 * 60 + parseInt(tstr[0]) * 1000 * 60 * 60
+                    if (startTimeMs == -1) {
+                        startTimeMs = timeMs
+                    }
+                    var oneLogLine = {tMs:(timeMs - startTimeMs), line:lines[i]}
+                    logLines.push(oneLogLine)
                 }
-                var oneLogLine = {tMs:(timeMs - startTimeMs), line:lines[i]}
-                logLines.push(oneLogLine)
             }
         }
         return logLines
@@ -166,15 +177,14 @@
         }
         
         for (i in logViewData.searchStringsData) {
-            if (i == 0) continue
-            if (logOneLine.line != null && logOneLine.line.search(logViewData.searchStringsData[i].searchString) >= 0) {
+            if (i == 0) {
+                logViewData.searchStringsData[0].matchLastCount += 1
+                oneLogFileData.matchCount = logViewData.searchStringsData[0].matchLastCount  
+            }
+            else if (logOneLine.line != null && logOneLine.line.search(logViewData.searchStringsData[i].searchString) >= 0) {
                 oneLogFileData.matchIndex = i
                 logViewData.searchStringsData[i].matchLastCount += 1
                 oneLogFileData.matchCount = logViewData.searchStringsData[i].matchLastCount
-            }
-            else {
-                logViewData.searchStringsData[0].matchLastCount += 1
-                oneLogFileData.matchCount = logViewData.searchStringsData[0].matchLastCount    
             }
         }
         
@@ -214,7 +224,10 @@
                 family:  'Raleway, sans-serif'
             },
             name: logViewData.searchStringsData[index].searchString,
-            mode: mode            
+            mode: mode,
+            marker : {
+                color:logViewData.searchStringsData[index].color
+            }            
         }
         for (i in logData) {
             if (logData[i].matchIndex == index) {
@@ -236,7 +249,7 @@
         }
         for (i in logViewData.searchStringsData) {
             if (logViewData.searchStringsData[i].used == "checked") {
-                plotData.push(createOnePlotData(logData, i, 'lines'))                
+                plotData.push(createOnePlotData(logData, i, 'markers'))                
             }
         }
         Plotly.newPlot('logDataPlotOutput', plotData, plotDataLayout)
