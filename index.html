@@ -20,7 +20,7 @@
 <script>
     // Global Variables    
     var logViewData = {
-        searchStrings:[],
+        searchStringsData:[],
         logfile:NaN,
     }
 
@@ -47,11 +47,11 @@
     
     function addSearchString() {
         searchString = document.getElementById("searchString").value
-        for (i in logViewData.searchStrings) {
-            if (logViewData.searchStrings[i][0] == searchString) return
+        for (i in logViewData.searchStringsData) {
+            if (logViewData.searchStringsData[i].searchString == searchString) return
         }
         if (searchString.length != 0) {
-            logViewData.searchStrings.push([searchString, 'checked', getNewColor()])
+            logViewData.searchStringsData.push({searchString:searchString, used:'checked', color:getNewColor()})
             updateSearchStringsCheckBox()
         }
     }
@@ -59,16 +59,16 @@
     function updateSearchStringCheckBox(checked, index) {
         console.log("updateSearchStringCheckBox = " + checked + index)
         if (checked) {
-            logViewData.searchStrings[index][1] = "checked"
+            logViewData.searchStringsData[index].used = "checked"
         }
         else {
-            logViewData.searchStrings[index][1] = ""
+            logViewData.searchStringsData[index].used = ""
         }
     }
     
-    function getOneSearchStringCheckBox(index, searchString) {
-        var oneSearchStringOutput = "<input type='checkbox' id = 'searchStringCheckBox_" + index + "' " + searchString[1] + 
-        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + searchString[0]
+    function getOneSearchStringCheckBox(index, searchStringData) {
+        var oneSearchStringOutput = "<input type='checkbox' id = 'searchStringCheckBox_" + index + "' " + searchStringData.used + 
+        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + searchStringData.searchString
         console.log(oneSearchStringOutput)
         return oneSearchStringOutput
     }
@@ -76,10 +76,10 @@
         var searchStringsOutput = []
         
         searchStringsOutput.push("<table>")
-        for (i in logViewData.searchStrings) {
-            searchStringsOutput.push("<tr style='color:" + logViewData.searchStrings[i][2] + "'>")
-            searchStringsOutput.push("<td>" + getOneSearchStringCheckBox(i, logViewData.searchStrings[i]) + "</td>")
-            searchStringsOutput.push("<td>" + logViewData.searchStrings[i][2] + "</td>")
+        for (i in logViewData.searchStringsData) {
+            searchStringsOutput.push("<tr style='color:" + logViewData.searchStringsData[i].color + "'>")
+            searchStringsOutput.push("<td>" + getOneSearchStringCheckBox(i, logViewData.searchStringsData[i]) + "</td>")
+            searchStringsOutput.push("<td>" + logViewData.searchStringsData[i].color + "</td>")
             searchStringsOutput.push("</tr>")
         }
         searchStringsOutput.push("</table>")
