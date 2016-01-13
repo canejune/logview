@@ -1,5 +1,9 @@
 <html>
 
+<head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
 <body>
     <p>
         Select File :
@@ -14,6 +18,9 @@
     </p>
     <p>
         <button id="processLogFileBtn"> Process </button>
+    </p>
+    <p>
+        <div id="logDataPlotOutput" style="width:1200px; hight: 800px;"></div>
     </p>
     <p>
         <div id="logFileOutput"></div>
@@ -33,6 +40,12 @@
 
 // Functions
 
+    function resetMatchLastCount() {
+        for (i in logViewData.searchStringsData) {
+            logViewData.searchStringsData[i].matchLastCount = 0
+        }
+    }
+
     function handleFileSelect(evt) {
         var files = evt.target.files; // FileList object
 
@@ -46,6 +59,8 @@
         }
         document.getElementById('logFileList').innerHTML = '<ul>' + output.join('') + '</ul>';
         logViewData.logfile = files[0]
+        
+        resetMatchLastCount()
     }    
     
     function addSearchString() {
@@ -115,7 +130,10 @@
             logLines = parseLogFile(contents)
             logData = processLogData(logLines)
             ouputLogData(logData)
+            drawLogData(logData)
         }
+        
+        resetMatchLastCount()
         
         reader.readAsText(logViewData.logfile)
     }
@@ -154,6 +172,10 @@
                 logViewData.searchStringsData[i].matchLastCount += 1
                 oneLogFileData.matchCount = logViewData.searchStringsData[i].matchLastCount
             }
+            else {
+                logViewData.searchStringsData[0].matchLastCount += 1
+                oneLogFileData.matchCount = logViewData.searchStringsData[0].matchLastCount    
+            }
         }
         
         return oneLogFileData
@@ -181,6 +203,45 @@
         output.push("</table>")
         document.getElementById("logFileOutput").innerHTML = output.join("")
     }
+    
+    function createOnePlotData(logData, index, mode) {
+        var plotOneData = {
+            x:[],
+            y:[],
+            text:[],
+            textposition: 'top center',
+            textfont: {
+                family:  'Raleway, sans-serif'
+            },
+            name: logViewData.searchStringsData[index].searchString,
+            mode: mode            
+        }
+        for (i in logData) {
+            if (logData[i].matchIndex == index) {
+                plotOneData.x.push(logData[i].tMs)
+                plotOneData.y.push(logData[i].matchCount)
+                plotOneData.text.push(logData[i].line)
+            }
+        }
+        
+        return plotOneData
+    }
+    
+    function drawLogData(logData) {
+        var plotData = []
+        var plotDataLayout = {
+            title:escape(logViewData.logfile.name),
+                  hight:800,
+                  width:1200            
+        }
+        for (i in logViewData.searchStringsData) {
+            if (logViewData.searchStringsData[i].used == "checked") {
+                plotData.push(createOnePlotData(logData, i, 'lines'))                
+            }
+        }
+        Plotly.newPlot('logDataPlotOutput', plotData, plotDataLayout)
+    }
+
 </script>
 
 </html>
