@@ -15,12 +15,15 @@
     <p>
         <button id="processLogFileBtn"> Process </button>
     </p>
+    <p>
+        <div id="logFileOutput"></div>
+    </p>
 </body>
 
 <script>
     // Global Variables    
     var logViewData = {
-        searchStringsData:[],
+        searchStringsData:[{searchString:"", used:'checked', color:"#000000", matchLastCount:0}],
         logfile:NaN,
     }
 
@@ -51,7 +54,7 @@
             if (logViewData.searchStringsData[i].searchString == searchString) return
         }
         if (searchString.length != 0) {
-            logViewData.searchStringsData.push({searchString:searchString, used:'checked', color:getNewColor()})
+            logViewData.searchStringsData.push({searchString:searchString, used:'checked', color:getNewColor(), matchLastCount:0})
             updateSearchStringsCheckBox()
         }
     }
@@ -68,7 +71,7 @@
     
     function getOneSearchStringCheckBox(index, searchStringData) {
         var oneSearchStringOutput = "<input type='checkbox' id = 'searchStringCheckBox_" + index + "' " + searchStringData.used + 
-        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + searchStringData.searchString
+        " onclick = 'updateSearchStringCheckBox(this.checked, " + index + ")' > " + function(s) { if (s != "") { return s } return "All others"}(searchStringData.searchString)
         console.log(oneSearchStringOutput)
         return oneSearchStringOutput
     }
@@ -135,11 +138,48 @@
         }
         return logLines
     }
-    function processLogData(logLines) {
-        console.log(logLines)
-    }
-    function ouputLogData(logData) {
+    
+    function processOneLineData(logOneLine){
+        var oneLogFileData = {
+            tMs:logOneLine.tMs,
+            line:logOneLine.line,
+            matchIndex:0,
+            matchCount:0
+        }
         
+        for (i in logViewData.searchStringsData) {
+            if (i == 0) continue
+            if (logOneLine.line != null && logOneLine.line.search(logViewData.searchStringsData[i].searchString) >= 0) {
+                oneLogFileData.matchIndex = i
+                logViewData.searchStringsData[i].matchLastCount += 1
+                oneLogFileData.matchCount = logViewData.searchStringsData[i].matchLastCount
+            }
+        }
+        
+        return oneLogFileData
+    }
+    
+    function processLogData(logLines) {
+        logData = []
+        for (i in logLines) {
+            logData.push(processOneLineData(logLines[i]))   
+        }
+        return logData
+    }
+
+    function ouputLogData(logData) {
+        var output = []
+        output.push("<table>")
+        for (i in logData) {
+            output.push("<tr style='color:" + logViewData.searchStringsData[logData[i].matchIndex].color + "' >")
+            output.push("<td>"+ logData[i].tMs +"</td>")
+            output.push("<td>"+ logData[i].matchIndex +"</td>")
+            output.push("<td>"+ logData[i].matchCount +"</td>")            
+            output.push("<td>"+ logData[i].line +"</td>")
+            output.push("</tr>")
+        }
+        output.push("</table>")
+        document.getElementById("logFileOutput").innerHTML = output.join("")
     }
 </script>
 
