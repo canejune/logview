@@ -18,6 +18,9 @@
     </p>
     <p>
         <button id="processLogFileBtn"> Process </button>
+        <br>
+        <div id="progressbarOutput">
+        </div>
     </p>
     <p>
         <div id="logDataPlotOutput" style="width:1200px; hight: 800px;"></div>
@@ -120,53 +123,37 @@
     }
     
     function handleOnClickProcessLogFile(evt) {
-        var logLines = []
+        var parseLogFileWorker = new Worker("ParseFile.js")
         var reader = new FileReader()
         reader.onload = function(e) {
             var contents = e.target.result;
-            logLines = parseLogFile(contents)
-            logData = processLogData(logLines)
-            ouputLogData(logData)
-            drawLogData(logData)
+            parseLogFileWorker.addEventListener('message', function(e) {
+                var data = e.data
+                if (data.done) {
+                    var logLines = data.logLines
+                    var logData = processLogData(logLines)
+                    ouputLogData(logData)
+                    drawLogData(logData)                   
+                }
+                else {
+                    updateProgressbar("Parse Log File", data.total, data.current)
+                }
+            })
+            parseLogFileWorker.postMessage({contents:contents})
         }
         
         resetMatchLastCount()
         
         reader.readAsText(logViewData.logfile)
     }
-    
-    function parseLogFile(contents) {
-        logLines = []
-        startTimeMs = -1
-        var lines = contents.toString().split("\n");
-        for (i in lines) {
-            if (logViewData.gllTimeTag) {
-                var t = lines[i].match(/\d+:\d+:\d+\.\d+/)
-                if (t) {
-                    tstr = t[0].split(":")
-                    timeMs = parseFloat(tstr[2]) * 1000 + parseInt(tstr[1]) * 1000 * 60 + parseInt(tstr[0]) * 1000 * 60 * 60
-                    if (startTimeMs == -1) {
-                        startTimeMs = timeMs
-                    }
-                    var oneLogLine = {tMs:(timeMs - startTimeMs), line:lines[i]}
-                    logLines.push(oneLogLine)
-                }                
-            }
-            else {
-                var t = lines[i].match(/\d+:\d+:\d+:\d+/)
-                if (t) {
-                    tstr = t[0].split(":")
-                    timeMs = parseInt(tstr[3]) + parseInt(tstr[2]) * 1000 + parseInt(tstr[1]) * 1000 * 60 + parseInt(tstr[0]) * 1000 * 60 * 60
-                    if (startTimeMs == -1) {
-                        startTimeMs = timeMs
-                    }
-                    var oneLogLine = {tMs:(timeMs - startTimeMs), line:lines[i]}
-                    logLines.push(oneLogLine)
-                }
-            }
-        }
-        return logLines
+
+    function updateProgressbar(name, total, current) {
+        document.getElementById("progressbarOutput").innerHTML = name + " : <progress value='" + Math.round((current*100)/total)  + "' max='100'> </progress> " + Math.round((current*100)/total) + "%"
+        
+//        console.log(total, current, Math.round((current*100)/total))
     }
+    
+
     
     function processOneLineData(logOneLine){
         var oneLogFileData = {
@@ -194,7 +181,8 @@
     function processLogData(logLines) {
         logData = []
         for (i in logLines) {
-            logData.push(processOneLineData(logLines[i]))   
+            logData.push(processOneLineData(logLines[i]))
+            updateProgressbar("Process Log Data", logLines.length, i)   
         }
         return logData
     }
@@ -209,6 +197,7 @@
             output.push("<td>"+ logData[i].matchCount +"</td>")            
             output.push("<td>"+ logData[i].line +"</td>")
             output.push("</tr>")
+            updateProgressbar("Output Log Data", logData.length, i)   
         }
         output.push("</table>")
         document.getElementById("logFileOutput").innerHTML = output.join("")
